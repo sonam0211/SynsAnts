@@ -2,4 +2,4 @@ flask
 peewee
 psycopg2
 bs4
-ipython
+uwsgi

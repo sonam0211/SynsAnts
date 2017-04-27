@@ -1,16 +1,18 @@
 from flask import Flask,render_template,request
-import urllib2
+import urllib.request
 from bs4 import BeautifulSoup
 from model import SynsAnts
-
+from peewee import create_model_tables
 
 app = Flask(__name__)
+
+create_model_tables([SynsAnts], fail_silently=True)
 
 url = 'http://www.synonym.com/synonym/'
 
 def get_synonym(word):
 	full_url = url + word
-	response = urllib2.urlopen(full_url)
+	response = urllib.request.urlopen(full_url)
 	html = response.read()
 	soup = BeautifulSoup(html,'html.parser')
 	synonyms_ul = soup.find('ul',{'class':'synonyms'})
@@ -37,10 +39,13 @@ def result():
 	if request.method == 'POST':
 		if request.form['word']:
 			if not exists(request.form['word']):
-				syns = get_synonym(request.form['word'])
-				save_data = SynsAnts(**syns)
-				print('saving to database:{}'.format(syns['word']))
-				save_data.save()
+				try:
+					syns = get_synonym(request.form['word'])
+					save_data = SynsAnts(**syns)
+					print('saving to database:{}'.format(syns['word']))
+					save_data.save()
+				except:
+					return 'No synonyms or antonyms found'
 			else:
 				data = SynsAnts.select().where(SynsAnts.word == request.form['word']).first()
 				syns = {}
@@ -48,7 +53,7 @@ def result():
 				syns['synonyms'] = data.synonyms
 				syns['antonyms'] = data.antonyms
 			return render_template('index.html',dict_syns=syns)	
-	return 'ok'
+		return 'Please Enter Word'
 
 if __name__ == '__main__':
 	app.run(debug = True) 

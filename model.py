@@ -1,20 +1,25 @@
-from peewee import Model, CharField
+import os
+from peewee import Model, CharField, PostgresqlDatabase
 from playhouse.postgres_ext import ArrayField
-from playhouse.pool import PostgresqlExtDatabase
+from playhouse.db_url import connect
 
 import settings
 
-psql_db = PostgresqlExtDatabase(
+psql_db = PostgresqlDatabase(
 	settings.DB_NAME,
 	user = settings.DB_USER,
 	password=settings.DB_PASS,
 	host=settings.DB_HOST,
-	register_hstore=False
 	)
+
+if os.environ.get('DATABASE_URL'):
+	database = connect(os.environ.get('DATABASE_URL'))
+else:
+	database = psql_db
 
 class BaseModel(Model):
 	class Meta:
-		database = psql_db
+		database = database
 
 
 class SynsAnts(BaseModel):
